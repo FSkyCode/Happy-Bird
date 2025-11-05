@@ -78,7 +78,7 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-// Ajuste de pantalla automática
+// Ajuste de pantalla
 canvas.width = window.innerWidth > 400 ? 400 : window.innerWidth - 20;
 canvas.height = window.innerHeight - 150;
 
@@ -94,16 +94,16 @@ let pipes = [{x: canvas.width, h: 150}];
 let score = 0;
 let difficulty = 1;
 let gameOver = false;
+let waitingRestart = false;
 
 // Pedir iniciales
-let waitingRestart = false;
 let player = prompt("Ingresa tus iniciales (3 letras):");
 player = player ? player.toUpperCase().slice(0,3) : "AAA";
 
 // Cargar ranking guardado
 let ranking = JSON.parse(localStorage.getItem("ranking") || "{}");
 
-// Función para guardar puntaje
+// Guardar puntaje
 function saveScore() {
   if (!ranking[player] || score > ranking[player]) {
     ranking[player] = score;
@@ -111,7 +111,7 @@ function saveScore() {
   }
 }
 
-// Reiniciar el juego
+// Reiniciar
 function resetGame() {
   birdY = canvas.height / 2;
   speed = 0;
@@ -119,90 +119,100 @@ function resetGame() {
   difficulty = 1;
   pipes = [{x: canvas.width, h: 150}];
   gameOver = false;
+  waitingRestart = false;
   loop();
 }
 
-// Bucle principal
+// Dibujar loop principal
 function loop() {
   if (gameOver) return;
 
   ctx.fillStyle = "skyblue";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // movimiento del pájaro
+  // Física
   speed += gravity;
   birdY += speed;
 
-  // dibujar pájaro
+  // Bird
+  const birdX = 60;
+  const r = 12;
   ctx.fillStyle = "yellow";
   ctx.beginPath();
-  ctx.arc(60, birdY, 12, 0, Math.PI * 2);
+  ctx.arc(birdX, birdY, r, 0, Math.PI * 2);
   ctx.fill();
 
-  // dibujar tubos
+  // Tubos
   pipes.forEach(p => {
     p.x -= 2 * difficulty;
     ctx.fillStyle = "green";
     ctx.fillRect(p.x, 0, 40, p.h);
     ctx.fillRect(p.x, p.h + 100, 40, canvas.height);
 
-    // colisión
-    // Centro x del pájaro
-const birdX = 60;
-// Radio real del pájaro
-const r = 12;
-
-if (
-  (birdX + r > p.x && birdX - r < p.x + 40) && 
-  (birdY - r < p.h || birdY + r > p.h + 100)
-) {
-      ctx.fillStyle = "red";
-      ctx.font = "25px sans-serif";
-      ctx.fillText("GAME OVER", canvas.width/2 - 80, canvas.height/2);
+    // Colisión real
+    if (
+      birdX + r > p.x && birdX - r < p.x + 40 &&
+      (birdY - r < p.h || birdY + r > p.h + 100)
+    ) {
       gameOver = true;
       saveScore();
-      setTimeout(resetGame, 2000);
+      showGameOver();
+      return;
     }
 
-    // pasar tubo
+    // Tubo pasa
     if (p.x < -40) {
       p.x = canvas.width;
       p.h = Math.random() * (canvas.height - 200);
       score++;
-      difficulty += 0.01; // +1% dificultad
+      difficulty += 0.01;
     }
   });
 
-  // puntaje
+  // Límite suelo
+  if (birdY + r > canvas.height) {
+    gameOver = true;
+    saveScore();
+    showGameOver();
+    return;
+  }
+
+  // UI
   ctx.fillStyle = "black";
   ctx.font = "16px sans-serif";
   ctx.fillText("Jugador: " + player, 10, 20);
   ctx.fillText("Puntaje: " + score, 10, 40);
   ctx.fillText("Dificultad: " + (difficulty * 100).toFixed(0) + "%", 10, 60);
 
-  // límite inferior
-  if (birdY > canvas.height - 10) {
-    gameOver = true;
-    saveScore();
-    ctx.fillStyle = "red";
-    ctx.font = "25px sans-serif";
-    ctx.fillText("GAME OVER", canvas.width/2 - 80, canvas.height/2);
-    setTimeout(resetGame, 2000);
-  }
-
   requestAnimationFrame(loop);
 }
 
-// Botones
-jumpBtn.addEventListener("click", () => {
-  if (gameOver) {
+function showGameOver() {
   ctx.fillStyle = "red";
-  ctx.font = "25px sans-serif";
-  ctx.fillText("GAME OVER", canvas.width/2 - 80, canvas.height/2);
-  return;
+  ctx.font = "28px sans-serif";
+  ctx.fillText("GAME OVER", canvas.width/2 - 90, canvas.height/2);
+  ctx.fillStyle = "black";
+  ctx.font = "20px sans-serif";
+  ctx.fillText("Toca para reiniciar", canvas.width/2 - 95, canvas.height/2 + 40);
+  waitingRestart = true;
 }
+
+// Botón Saltar
+jumpBtn.addEventListener("click", () => {
+  // Si está muerto → espera segundo toque para reinicio
+  if (gameOver && waitingRestart) {
+    resetGame();
+    return;
+  }
+
+  // Si muere pero aún no se ha mostrado la espera
+  if (gameOver && !waitingRestart) return;
+
+  // Salto normal
+  speed = -7;
 });
 
+// Ranking
 rankingBtn.addEventListener("click", () => {
   saveScore();
   window.location.href = "ranking.html";

@@ -96,6 +96,7 @@ let difficulty = 1;
 let gameOver = false;
 
 // Pedir iniciales
+let waitingRestart = false;
 let player = prompt("Ingresa tus iniciales (3 letras):");
 player = player ? player.toUpperCase().slice(0,3) : "AAA";
 
@@ -146,7 +147,15 @@ function loop() {
     ctx.fillRect(p.x, p.h + 100, 40, canvas.height);
 
     // colisión
-    if (p.x < 80 && p.x > 40 && (birdY < p.h || birdY > p.h + 100)) {
+    // Centro x del pájaro
+const birdX = 60;
+// Radio real del pájaro
+const r = 12;
+
+if (
+  (birdX + r > p.x && birdX - r < p.x + 40) && 
+  (birdY - r < p.h || birdY + r > p.h + 100)
+) {
       ctx.fillStyle = "red";
       ctx.font = "25px sans-serif";
       ctx.fillText("GAME OVER", canvas.width/2 - 80, canvas.height/2);
@@ -186,7 +195,12 @@ function loop() {
 
 // Botones
 jumpBtn.addEventListener("click", () => {
-  if (!gameOver) speed = -7;
+  if (gameOver) {
+  ctx.fillStyle = "red";
+  ctx.font = "25px sans-serif";
+  ctx.fillText("GAME OVER", canvas.width/2 - 80, canvas.height/2);
+  return;
+}
 });
 
 rankingBtn.addEventListener("click", () => {

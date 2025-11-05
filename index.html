@@ -36,13 +36,26 @@
     transform: translateY(2px);
     box-shadow: 0 2px #b88a00;
   }
+.jump {
+  width: 100vw;          /* ancho completo */
+  height: 18vh;          /* bien grande */
+  background: rgba(255, 215, 0, 0.8);
+  border: none;
+  border-radius: 0;
+  user-select: none;     /* no seleccionable */
+  -webkit-user-select: none;
+  font-size: 0;          /* quita texto visible */
+}
+.jump:active {
+  background: rgba(255, 215, 0, 1);
+}
 </style>
 </head>
 <body>
 
 <canvas id="game"></canvas>
 <div>
-  <button id="jumpBtn">Saltar</button>
+  <button id="jumpBtn" class="jump"></button>
   <button id="rankingBtn">Ver Ranking</button>
 </div>
 

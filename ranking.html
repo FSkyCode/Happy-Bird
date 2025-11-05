@@ -76,7 +76,7 @@ top10.forEach(([name, score], i) => {
 });
 
 // Ver tu posición
-const lastPlayer = Object.keys(ranking).pop();
+const lastPlayer = localStorage.getItem("currentPlayer");
 const index = players.findIndex(([n]) => n === lastPlayer);
 if (index >= 10) {
   const [n, s] = players[index];

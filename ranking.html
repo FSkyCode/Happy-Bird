@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ranking - Happy Bird</title>
+<style>
+  body {
+    margin: 0;
+    background: skyblue;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    font-family: sans-serif;
+  }
+  h1 {
+    margin-bottom: 10px;
+  }
+  table {
+    border-collapse: collapse;
+    width: 80%;
+    max-width: 400px;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  th, td {
+    padding: 10px;
+    text-align: center;
+    border-bottom: 1px solid #ccc;
+  }
+  tr:nth-child(1) { background: gold; }
+  tr:nth-child(2) { background: silver; }
+  tr:nth-child(3) { background: #cd7f32; }
+  button {
+    margin-top: 15px;
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: none;
+    background: gold;
+    font-size: 18px;
+    font-weight: bold;
+    box-shadow: 0 4px #b88a00;
+  }
+  button:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px #b88a00;
+  }
+</style>
+</head>
+<body>
+  <h1>Ranking Global</h1>
+  <table id="rankingTable">
+    <tr><th>#</th><th>Jugador</th><th>Puntaje</th></tr>
+  </table>
+  <p id="yourRank"></p>
+  <button id="backBtn">Volver al Juego</button>
+
+<script>
+const table = document.getElementById("rankingTable");
+const yourRank = document.getElementById("yourRank");
+const ranking = JSON.parse(localStorage.getItem("ranking") || "{}");
+
+// Convertir a lista y ordenar
+const players = Object.entries(ranking)
+  .sort((a, b) => b[1] - a[1]);
+
+const top10 = players.slice(0, 10);
+
+// Mostrar top 10
+top10.forEach(([name, score], i) => {
+  const row = document.createElement("tr");
+  row.innerHTML = `<td>${i+1}</td><td>${name}</td><td>${score}</td>`;
+  table.appendChild(row);
+});
+
+// Ver tu posición
+const lastPlayer = Object.keys(ranking).pop();
+const index = players.findIndex(([n]) => n === lastPlayer);
+if (index >= 10) {
+  const [n, s] = players[index];
+  yourRank.textContent = `Tu posición: #${index+1} - ${n} (${s} pts)`;
+}
+
+document.getElementById("backBtn").onclick = () => {
+  window.location.href = "index.html";
+};
+</script>
+</body>
+</html>

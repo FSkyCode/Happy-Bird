@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Happy Bird</title>
+<style>
+  html, body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+    background: skyblue;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  canvas {
+    border: 2px solid black;
+    border-radius: 10px;
+    touch-action: manipulation;
+  }
+  button {
+    margin-top: 10px;
+    padding: 12px 20px;
+    font-size: 18px;
+    border-radius: 10px;
+    border: none;
+    background: gold;
+    font-weight: bold;
+    box-shadow: 0 4px #b88a00;
+  }
+  button:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px #b88a00;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="game"></canvas>
+<div>
+  <button id="jumpBtn">Saltar</button>
+  <button id="rankingBtn">Ver Ranking</button>
+</div>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+// Ajuste de pantalla automática
+canvas.width = window.innerWidth > 400 ? 400 : window.innerWidth - 20;
+canvas.height = window.innerHeight - 150;
+
+// Botones
+const jumpBtn = document.getElementById("jumpBtn");
+const rankingBtn = document.getElementById("rankingBtn");
+
+// Variables del juego
+let birdY = canvas.height / 2;
+let speed = 0;
+let gravity = 0.5;
+let pipes = [{x: canvas.width, h: 150}];
+let score = 0;
+let difficulty = 1;
+let gameOver = false;
+
+// Pedir iniciales
+let player = prompt("Ingresa tus iniciales (3 letras):");
+player = player ? player.toUpperCase().slice(0,3) : "AAA";
+
+// Cargar ranking guardado
+let ranking = JSON.parse(localStorage.getItem("ranking") || "{}");
+
+// Función para guardar puntaje
+function saveScore() {
+  if (!ranking[player] || score > ranking[player]) {
+    ranking[player] = score;
+    localStorage.setItem("ranking", JSON.stringify(ranking));
+  }
+}
+
+// Reiniciar el juego
+function resetGame() {
+  birdY = canvas.height / 2;
+  speed = 0;
+  score = 0;
+  difficulty = 1;
+  pipes = [{x: canvas.width, h: 150}];
+  gameOver = false;
+  loop();
+}
+
+// Bucle principal
+function loop() {
+  if (gameOver) return;
+
+  ctx.fillStyle = "skyblue";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // movimiento del pájaro
+  speed += gravity;
+  birdY += speed;
+
+  // dibujar pájaro
+  ctx.fillStyle = "yellow";
+  ctx.beginPath();
+  ctx.arc(60, birdY, 12, 0, Math.PI * 2);
+  ctx.fill();
+
+  // dibujar tubos
+  pipes.forEach(p => {
+    p.x -= 2 * difficulty;
+    ctx.fillStyle = "green";
+    ctx.fillRect(p.x, 0, 40, p.h);
+    ctx.fillRect(p.x, p.h + 100, 40, canvas.height);
+
+    // colisión
+    if (p.x < 80 && p.x > 40 && (birdY < p.h || birdY > p.h + 100)) {
+      ctx.fillStyle = "red";
+      ctx.font = "25px sans-serif";
+      ctx.fillText("GAME OVER", canvas.width/2 - 80, canvas.height/2);
+      gameOver = true;
+      saveScore();
+      setTimeout(resetGame, 2000);
+    }
+
+    // pasar tubo
+    if (p.x < -40) {
+      p.x = canvas.width;
+      p.h = Math.random() * (canvas.height - 200);
+      score++;
+      difficulty += 0.01; // +1% dificultad
+    }
+  });
+
+  // puntaje
+  ctx.fillStyle = "black";
+  ctx.font = "16px sans-serif";
+  ctx.fillText("Jugador: " + player, 10, 20);
+  ctx.fillText("Puntaje: " + score, 10, 40);
+  ctx.fillText("Dificultad: " + (difficulty * 100).toFixed(0) + "%", 10, 60);
+
+  // límite inferior
+  if (birdY > canvas.height - 10) {
+    gameOver = true;
+    saveScore();
+    ctx.fillStyle = "red";
+    ctx.font = "25px sans-serif";
+    ctx.fillText("GAME OVER", canvas.width/2 - 80, canvas.height/2);
+    setTimeout(resetGame, 2000);
+  }
+
+  requestAnimationFrame(loop);
+}
+
+// Botones
+jumpBtn.addEventListener("click", () => {
+  if (!gameOver) speed = -7;
+});
+
+rankingBtn.addEventListener("click", () => {
+  saveScore();
+  window.location.href = "ranking.html";
+});
+
+loop();
+</script>
+</body>
+</html>
